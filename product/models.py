@@ -7,5 +7,12 @@ class Product(Base):
   name = Column(String)
   description = Column(String)
   price = Column (Integer)
-  
+   
+
+class Seller(Base):
+  __tablename__= 'sellers'
+  id = Column(Integer, primary_key=True, index=True)
+  username = Column(String)
+  email = Column(String)
+  password = Column(String)
   
