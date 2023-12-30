@@ -3,10 +3,23 @@ from ..import schemas,database,models
 from argon2.exceptions import VerifyMismatchError
 from .seller import *
 from sqlalchemy.orm import Session
+from datetime import datetime, timedelta
+from jose import jwt, JWTError
 
+SECRET_KEY = '2a9ec499cf629dd9a7ff48457f2cf5dc2b4742b90b05e9b6ff4d6130b6b74e8e'
+ALGORITHM = 'HS256'
+ACCESS_TOKEN_EXPIRE_MINUTES = 20
 
 router = APIRouter()
+
 ph = PasswordHasher()
+
+def generate_token(data: dict):
+  to_encode = data.copy()
+  expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+  to_encode.update({'exp': expire})
+  encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorith=ALGORITHM)
+  return encoded_jwt
 
 
 # Function to verify the password

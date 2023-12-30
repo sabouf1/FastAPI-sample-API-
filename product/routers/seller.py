@@ -5,7 +5,6 @@ from ..import models, schemas
 from ..database import SessionLocal, engine
 from typing import List
 from argon2 import PasswordHasher
-from argon2.exceptions import VerifyMismatchError
 
 router = APIRouter()
 
