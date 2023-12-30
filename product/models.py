@@ -9,7 +9,7 @@ class Product(Base):
   description = Column(String)
   price = Column(Integer)
   seller_id = Column(Integer, ForeignKey('sellers.id'))
-  seller = relationship("Seller" , back_populates='products') 
+  seller = relationship("Seller" , back_populates='products', lazy='joined') 
 
 class Seller(Base):
   __tablename__= 'sellers'
