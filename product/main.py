@@ -21,7 +21,7 @@ def get_db():
 @app.post('/product', response_model=schemas.Product)
 def add_product(product: schemas.ProductCreate):
     db = SessionLocal()
-    db_product = models.Product(name=product.name, description=product.description, price=product.price)
+    db_product = models.Product(name=product.name, description=product.description, price=product.price, seller_id=1)
     db.add(db_product)
     db.commit()
     db.refresh(db_product)
@@ -40,7 +40,7 @@ def get_product(product_id: int, db: Session = Depends(get_db)):
 def get_products(db: Session = Depends(get_db)):
     return db.query(models.Product).all()
  
-@app.post('/seller', response_model=schemas.Seller)
+@app.post('/seller', response_model=schemas.SellerDisplay)
 def add_seller(seller: schemas.SellerCreate):
     db = SessionLocal()
     db_seller = models.Seller(username=seller.username, email=seller.email, password=seller.password)
@@ -56,3 +56,6 @@ def get_seller(seller_id: int, db: Session = Depends(get_db)):
     if seller_id is None:
         raise HTTPException(status_code=404, detail="Seller not found")
     return seller_id
+  
+  
+  

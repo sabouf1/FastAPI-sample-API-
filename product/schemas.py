@@ -25,6 +25,15 @@ class SellerCreate(SellerBase):
 
 class Seller(SellerBase):
   id: int
+  username : str
+  email : str
+  
+  class Config:
+    orm_mode = True
+    
+class SellerDisplay(BaseModel):
+  username : str
+  email : str
   
   class Config:
     orm_mode = True
