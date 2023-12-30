@@ -30,12 +30,9 @@ class ProductBase(BaseModel):
   description: str
   price: int
    
+
   
-class ProductCreate(ProductBase):
-  pass
-  seller: SellerDisplay
-  
-class Product(BaseModel):
+class Product(ProductBase):
   id: int
   name : str
   description : str

@@ -1,0 +1,15 @@
+{
+  "logs": {
+    "logs_collected": {
+      "files": {
+        "collect_list": [
+          {
+            "file_path": "/path/to/your/logfile.log",
+            "log_group_name": "your-log-group",
+            "log_stream_name": "your-log-stream"
+          }
+        ]
+      }
+    }
+  }
+}
