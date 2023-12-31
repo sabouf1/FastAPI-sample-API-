@@ -42,21 +42,27 @@ def add_user(user: schemas.UserCreate):
     return db_user
 
 @router.get('/{user_name}', response_model=schemas.UserDisplay)
-async def get_user_id(user_name: str, db: Session = Depends(get_db), current_user: schemas.UserDisplay = Depends(get_current_user)):
+async def get_user_id(user_name: str, 
+                      db: Session = Depends(get_db), 
+                      current_user: schemas.UserDisplay = Depends(get_current_user)):
     user = db.query(models.User).filter(models.User.username == user_name).first()
     if user is None:
         raise HTTPException(status_code=404, detail="User not found")
     return user
   
 @router.get('/{user_id}', response_model=schemas.UserDisplay)
-async def get_user_id(user_id: int, db: Session = Depends(get_db), current_user: schemas.UserDisplay = Depends(get_current_user)):
+async def get_user_id(user_id: int, 
+                      db: Session = Depends(get_db), 
+                      current_user: schemas.UserDisplay = Depends(get_current_user)):
     user = db.query(models.User).filter(models.User.id == user_id).first()
     if user is None:
         raise HTTPException(status_code=404, detail="User not found")
     return user
   
 @router.get('/{user_id}', response_model=schemas.UserDisplay)
-def get_user_id(user_id: int, db: Session = Depends(get_db), current_user: schemas.UserDisplay = Depends(get_current_user)):
+def get_user_id(user_id: int, 
+                db: Session = Depends(get_db), 
+                current_user: schemas.UserDisplay = Depends(get_current_user)):
     user  = db.query(models.User).filter(models.User.id == user_id).first()
     if user  is None:
         raise HTTPException(status_code=404, detail="User not found")
@@ -71,31 +77,38 @@ async def get_users(
     # Ensure the current user is authorized (e.g., an admin)
     if not current_user.is_admin:
         raise HTTPException(status_code=403, detail="Not authorized to access this resource")
-
-    query = db.query(models.User)
-    
+    query = db.query(models.User)   
     # Basic search functionality
     if search:
         query = query.filter(models.User.username.contains(search))
-
     users = query.offset(skip).limit(limit).all()
     return users
   
-  
 @router.put('/{user_id}', response_model=schemas.UserDisplay)
-async def update_user(user_id: int, user_update: schemas.UserUpdate, db: Session = Depends(get_db) , current_user: schemas.UserDisplay = Depends(get_current_user)):
+async def update_user(user_id: int, user_update: schemas.UserUpdate, 
+                      db: Session = Depends(get_db) , 
+                      current_user: schemas.UserDisplay = Depends(get_current_user)):
     db = SessionLocal()
     user = db.query(models.User).filter(models.User.id == user_id).first()
-    
     if not user:
       raise HTTPException(status_code=404, detail="User not found")
-
     for var, value in vars(user_update).items():
         if value is not None:
             setattr(user, var, value)    
-
     db.add(user)
     db.commit()
     db.refresh(user)
     db.close()
     return user
+
+@router.delete('/{user_id}', status_code=status.HTTP_204_NO_CONTENT)
+async def delete_user(user_id: int, 
+                      db: Session = Depends(get_db), 
+                      current_user: schemas.UserDisplay = Depends(get_current_user)):
+    user = db.query(models.User).filter(models.User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    # Delete the user
+    db.delete(user)
+    db.commit()
+    return {"detail": "User successfully deleted"}

@@ -1,76 +1,44 @@
-from fastapi import APIRouter
-from sqlalchemy.orm import Session
-from fastapi import FastAPI, HTTPException, Depends
-from ..import models, schemas
-from ..database import SessionLocal, engine
-from typing import List
-from argon2 import PasswordHasher
-from .seller_login import *
 
 
-router = APIRouter()
+POST /orders/: Place a new order.
+GET /orders/{order_id}: Retrieve details of a specific order.
+GET /orders/: Retrieve a list of orders (could include filters like date range, status).
+PUT /orders/{order_id}: Update the status or details of an order.
+DELETE /orders/{order_id}: Cancel an order.
+Product Review and Rating:
 
-ph = PasswordHasher()
+POST /products/{product_id}/reviews/: Add a review for a product.
+GET /products/{product_id}/reviews/: Get all reviews for a product.
+DELETE /products/{product_id}/reviews/{review_id}: Delete a specific review.
+Seller Management:
 
-router = APIRouter(
-  tags=['Sellers'],
-  prefix='/seller'
-)
+Inventory Management (for sellers):
 
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
- 
-@router.post('/', response_model=schemas.SellerDisplay)
-def add_seller(seller: schemas.SellerCreate, current_user:schemas.Seller = Depends(get_current_user)):
-    db = SessionLocal()
-    hashed_password = ph.hash(seller.password)
-    db_seller = models.Seller(username=seller.username, email=seller.email, password=hashed_password)
-    db.add(db_seller)
-    db.commit()
-    db.refresh(db_seller)
-    db.close()
-    return db_seller
+GET /sellers/{seller_id}/inventory: Get the inventory of a specific seller.
+POST /sellers/{seller_id}/inventory: Add a product to the seller's inventory.
+PUT /sellers/{seller_id}/inventory/{product_id}: Update the inventory for a specific product.
+DELETE /sellers/{seller_id}/inventory/{product_id}: Remove a product from the inventory.
+Shopping Cart:
 
-@router.get('/{seller_id}', response_model=schemas.Seller)
-def get_seller(seller_id: int, db: Session = Depends(get_db), current_user:schemas.Seller = Depends(get_current_user)):
-    seller_id = db.query(models.Seller).filter(models.Seller.id == seller_id).first()
-    if seller_id is None:
-        raise HTTPException(status_code=404, detail="Seller not found")
-    return seller_id
-  
-@router.put('/{seller_id}', response_model=schemas.SellerDisplay)
-async def update_user(seller_id: int, 
-                      user_update: schemas.SellerUpdate, db: Session = Depends(get_db) , 
-                      current_user: schemas.SellerDisplay = Depends(get_current_user)):
-    db = SessionLocal()
-    seller = db.query(models.Seller).filter(models.Seller.id == seller_id).first()
-    
-    if not seller:
-      raise HTTPException(status_code=404, detail="User not found")
+POST /cart/: Add a product to the shopping cart.
+GET /cart/: Retrieve the contents of the shopping cart.
+PUT /cart/{product_id}: Update the quantity of a product in the cart.
+DELETE /cart/{product_id}: Remove a product from the cart.
+Payment Processing:
 
-    for var, value in vars(user_update).items():
-        if value is not None:
-            setattr(seller, var, value)    
+POST /payments/: Process a payment for an order.
+GET /payments/{payment_id}: Get the details of a specific payment.
+Wishlist or Favorites:
 
-    db.add(seller)
-    db.commit()
-    db.refresh(seller)
-    db.close()
-    return seller
-  
-@router.delete('/sellers/{seller_id}', status_code=status.HTTP_204_NO_CONTENT)
-async def delete_seller(seller_id: int, db: Session = Depends(get_db), current_user: schemas.SellerDisplay = Depends(get_current_user)):
-    # Retrieve the seller to be deleted
-    seller = db.query(models.Seller).filter(models.Seller.id == seller_id).first()
-    if not seller:
-        raise HTTPException(status_code=404, detail="Seller not found")
+POST /wishlist/: Add a product to the wishlist.
+GET /wishlist/: Retrieve the wishlist.
+DELETE /wishlist/{product_id}: Remove a product from the wishlist.
+Reporting and Analytics (Admin focused):
 
-    # Delete the seller
-    db.delete(seller)
-    db.commit()
+GET /reports/sales: Generate sales reports.
+GET /reports/inventory: Generate inventory level reports.
+Notifications:
 
-    return {"detail": "Seller successfully deleted"}
+POST /notifications/subscribe: Subscribe to notifications.
+POST /notifications/unsubscribe: Unsubscribe from notifications.
+GET /notifications/: Get the user's notification settings.
