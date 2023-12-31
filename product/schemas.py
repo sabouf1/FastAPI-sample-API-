@@ -1,5 +1,8 @@
 from pydantic import BaseModel,EmailStr
 from typing import Optional
+from datetime import datetime
+
+
 
 
 class SellerBase(BaseModel):
@@ -81,5 +84,24 @@ class UserDisplay(UserBase):
   class Config:
     orm_mode = True
     
+# Schema for creating a new order
+class OrderCreate(BaseModel):
+    product_id: int
+    user_id: int
+    quantity: int
+
+class OrderDisplay(BaseModel):
+    id: int
+    product_id: int
+    user_id: int
+    quantity: int
+    created_at: datetime
+
+    class Config:
+        orm_mode = True
+
+class OrderDisplayExtended(OrderDisplay):
+    product: Optional[Product]
+    user: Optional[UserDisplay]
 
     

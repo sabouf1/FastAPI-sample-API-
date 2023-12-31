@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, ForeignKey, Boolean
+from sqlalchemy import Column, Integer, String, ForeignKey, Boolean, DateTime, func
 from .database import Base
 from sqlalchemy.orm import relationship
 
@@ -10,6 +10,7 @@ class Product(Base):
   price = Column(Integer)
   seller_id = Column(Integer, ForeignKey('sellers.id'))
   seller = relationship("Seller" , back_populates='products', lazy='joined') 
+  orders = relationship("Order", back_populates="product")
 
 class Seller(Base):
   __tablename__= 'sellers'
@@ -27,3 +28,19 @@ class User(Base):
   password = Column(String)
   is_active = Column(Boolean, default=True)
   is_admin = Column(Boolean, default=False)
+  orders = relationship("Order", back_populates="user")
+  
+  
+
+class Order(Base):
+    __tablename__ = 'orders'
+
+    id = Column(Integer, primary_key=True, index=True)
+    product_id = Column(Integer, ForeignKey('products.id'))
+    user_id = Column(Integer, ForeignKey('users.id'))
+    quantity = Column(Integer, nullable=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    # Relationships
+    product = relationship("Product", back_populates="orders")
+    user = relationship("User", back_populates="orders")
