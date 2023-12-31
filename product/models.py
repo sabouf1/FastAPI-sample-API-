@@ -28,4 +28,10 @@ class User(Base):
   is_active = Column(Boolean, default=True)
   is_admin = Column(Boolean, default=False)
 
+class UserUpdate(BaseModel):
+    username: Optional[str] = None
+    email: Optional[EmailStr] = None
+    is_active: Optional[bool] = None
+    is_admin: Optional[bool] = None
+
   

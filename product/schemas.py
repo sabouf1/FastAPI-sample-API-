@@ -66,4 +66,10 @@ class UserDisplay(UserBase):
   is_admin: bool
     
   class Config:
-    orm_moode = True
+    orm_mode = True
+    
+class UserUpdate(BaseModel):
+    username: Optional[str] = None
+    email: Optional[EmailStr] = None
+    is_active: Optional[bool] = None
+    is_admin: Optional[bool] = None

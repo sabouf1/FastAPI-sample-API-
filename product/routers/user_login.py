@@ -8,6 +8,8 @@ from sqlalchemy.orm import Session
 from datetime import datetime, timedelta
 from ..database import SessionLocal, engine
 from jose import jwt, JWTError
+import logging
+
 
 router = APIRouter(
   prefix='/userlogin',
@@ -16,7 +18,11 @@ router = APIRouter(
 
 SECRET_KEY = '2a9ec499cf629dd9a7ff48457f2cf5dc2b4742b90b05e9b6ff4d6130b6b74e8e'
 ALGORITHM = 'HS256'
-ACCESS_TOKEN_EXPIRE_MINUTES = 20
+ACCESS_TOKEN_EXPIRE_MINUTES = 200
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -38,10 +44,10 @@ def generate_token(data: dict):
   encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
   return encoded_jwt
 
-def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
+def get_current_user(token: str = Depends(oauth2_scheme)):
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Could not validate credentials",
+        detail="Invalid token",
         headers={'WWW-Authenticate': 'Bearer'}
     )
     try:
@@ -49,11 +55,13 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
         username: str = payload.get('sub')
         if username is None:
             raise credentials_exception
-        user = db.query(models.User).filter(models.User.username == username).first()
-        if user is None:
-            raise credentials_exception
-        return user
-    except JWTError:
+        logger.info(f"Retrieved user from token: {username}")
+        # Additional code to fetch user from DB
+    except JWTError as e:
+        logger.error(f"JWT error: {e}")
+        raise credentials_exception
+    except Exception as e:
+        logger.error(f"Unexpected error in get_current_user: {e}")
         raise credentials_exception
 
  

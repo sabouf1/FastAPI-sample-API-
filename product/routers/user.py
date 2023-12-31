@@ -6,6 +6,11 @@ from argon2 import PasswordHasher
 from ..database import SessionLocal, engine
 from .user_login import get_current_user
 from typing import List
+import logging
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 router = APIRouter
 
@@ -26,7 +31,7 @@ def get_db():
 
 
 @router.post('/', response_model=schemas.UserDisplay)
-def add_user(user: schemas.UserCreate, current_user:schemas.Seller = Depends(get_current_user)):
+def add_user(user: schemas.UserCreate):
     db = SessionLocal()
     hashed_password = ph.hash(user.password)
     db_user = models.User(username=user.username, email=user.email, password=hashed_password, is_admin=False)
@@ -37,14 +42,20 @@ def add_user(user: schemas.UserCreate, current_user:schemas.Seller = Depends(get
     return db_user
 
 
-@router.get('/{user_name}', response_model=schemas.UserDisplay)
-async def get_user (user_name: str, db: Session = Depends(get_db), current_user:schemas.UserDisplay = Depends(get_current_user)):
-    user_name = db.query(models.User).filter(models.User.username == user_name).first()
-    if user_name is None:
-        raise HTTPException(status_code=404, detail="USER not found")
-    return user_name
+@router.get('/{user_id}', response_model=schemas.UserDisplay)
+async def get_user_id(user_id: int, db: Session = Depends(get_db), current_user: schemas.UserDisplay = Depends(get_current_user)):
+    user = db.query(models.User).filter(models.User.id == user_id).first()
+    if user is None:
+        raise HTTPException(status_code=404, detail="User not found")
+    return user
   
- 
+@router.get('/{user_id}', response_model=schemas.UserDisplay)
+def get_user_id(user_id: int, db: Session = Depends(get_db), current_user: schemas.UserDisplay = Depends(get_current_user)):
+    user  = db.query(models.User).filter(models.User.id == user_id).first()
+    if user  is None:
+        raise HTTPException(status_code=404, detail="User not found")
+    return user 
+     
 @router.get("/", response_model=List[schemas.UserDisplay])  
 async def get_users(
     db: Session = Depends(get_db),
