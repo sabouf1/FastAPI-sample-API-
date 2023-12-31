@@ -4,11 +4,9 @@ from ..import schemas,models
 from ..schemas import TokenData
 from argon2 import PasswordHasher
 from argon2.exceptions import VerifyMismatchError
-# from .seller import *
 from sqlalchemy.orm import Session
 from datetime import datetime, timedelta
 from ..database import SessionLocal, engine
-
 from jose import jwt, JWTError
 
 SECRET_KEY = '2a9ec499cf629dd9a7ff48457f2cf5dc2b4742b90b05e9b6ff4d6130b6b74e8e'
@@ -78,6 +76,3 @@ def login(request: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(
       data={'sub': seller.username}
     )
     return {'access_token' : access_token, 'token_type' : 'bearer'}
-    
-
-

@@ -5,7 +5,7 @@ from ..import models, schemas
 from ..database import SessionLocal, engine
 from typing import List
 from argon2 import PasswordHasher
-from .login import *
+from .seller_login import *
 
 
 router = APIRouter()

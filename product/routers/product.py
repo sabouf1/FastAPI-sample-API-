@@ -2,7 +2,7 @@ from fastapi import APIRouter
 from sqlalchemy.orm import Session
 from fastapi import FastAPI, HTTPException, Depends
 from .. import models, schemas
-from .login import *
+from .seller_login import *
 from ..database import SessionLocal, engine
 from typing import List
 

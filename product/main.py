@@ -2,7 +2,7 @@ from typing import List
 from fastapi import FastAPI, Depends
 from . import models 
 from .database import SessionLocal, engine
-from .routers import product,seller, login
+from .routers import product,seller, seller_login,user
 import logging
 
 
@@ -21,7 +21,8 @@ app = FastAPI(
 
 app.include_router(product.router)
 app.include_router(seller.router)
-app.include_router(login.router)
+app.include_router(seller_login.router)
+app.include_router(user.router)
 
 models.Base.metadata.create_all(bind=engine)
 
