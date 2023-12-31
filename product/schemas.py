@@ -63,6 +63,7 @@ class UserUpdate(UserBase):
 class UserDisplay(UserBase):
   id: int
   is_active: bool
-  
+  is_admin: bool
+    
   class Config:
     orm_moode = True

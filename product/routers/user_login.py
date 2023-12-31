@@ -9,6 +9,11 @@ from datetime import datetime, timedelta
 from ..database import SessionLocal, engine
 from jose import jwt, JWTError
 
+router = APIRouter(
+  prefix='/userlogin',
+  tags=['Users']
+)
+
 SECRET_KEY = '2a9ec499cf629dd9a7ff48457f2cf5dc2b4742b90b05e9b6ff4d6130b6b74e8e'
 ALGORITHM = 'HS256'
 ACCESS_TOKEN_EXPIRE_MINUTES = 20
@@ -33,21 +38,24 @@ def generate_token(data: dict):
   encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
   return encoded_jwt
 
-def get_current_user(token: str = Depends(oauth2_scheme)):
-  credentials_exception = HTTPException(
-    status_code=status.HTTP_401_UNAUTHORIZED,
-    detail="Invalid password",
-    headers={'WWW-Authenticate' : 'Bearer'}
-  )
-  try:
-    payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-    username: str = payload.get('sub')
-    if username is None:
-      raise credentials_exception
-    
-    token_data = TokenData(username=username)
-  except JWTError:
-    raise credentials_exception
+def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Could not validate credentials",
+        headers={'WWW-Authenticate': 'Bearer'}
+    )
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        username: str = payload.get('sub')
+        if username is None:
+            raise credentials_exception
+        user = db.query(models.User).filter(models.User.username == username).first()
+        if user is None:
+            raise credentials_exception
+        return user
+    except JWTError:
+        raise credentials_exception
+
  
   
 # Function to verify the password
@@ -61,18 +69,18 @@ def verify_password(plain_password, hashed_password):
             detail="Invalid password",
         )
       
-@router.post('/login')
-def login(request: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
-    seller = db.query(models.Seller).filter(models.Seller.username == request.username).first()
-    if not seller:
+@router.post('/userlogin')
+def user_login(request: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
+    user = db.query(models.User).filter(models.User.username == request.username).first()
+    if not user:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail='Incorrect Username or Password'
         )
         
-    verify_password(request.password, seller.password)  
+    verify_password(request.password, user.password)  
     
     access_token = generate_token(
-      data={'sub': seller.username}
+      data={'sub': user.username}
     )
     return {'access_token' : access_token, 'token_type' : 'bearer'}

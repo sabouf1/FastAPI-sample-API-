@@ -2,20 +2,24 @@ from typing import List
 from fastapi import FastAPI, Depends
 from . import models 
 from .database import SessionLocal, engine
-from .routers import product,seller, seller_login,user
+from .routers import product,seller, seller_login,user, user_login
 import logging
 
 
 
 app = FastAPI(
-  title = "My Products API",
-  description = "Get the details for all products on our website",
-  terms_of_service='https://github.com/sabouf1/FastAPI-sample-API-',
-  
-  contact={
-    'Developer Name' : 'Said B.',
-    'website' : 'https://github.com/sabouf1/FastAPI-sample-API-',
-    'Email' : "said.boufares.@aol.com"
+  title = "My Products API - Powered by FastAPI",
+  description = "Said B.",
+  version = "1.0.0",
+  terms_of_service = "https://github.com/sabouf1/FastAPI-sample-API-/blob/main/TERMS.md",
+  contact = {
+    "Developer Name": "Said B.",
+    "Website": "https://github.com/sabouf1/FastAPI-sample-API-",
+    "Email": "said.boufares.@aol.com"
+  },
+  license_info = {
+    "name": "MIT License",
+    "url": "https://github.com/sabouf1/FastAPI-sample-API-/blob/main/LICENSE"
   }
 )
 
@@ -23,6 +27,7 @@ app.include_router(product.router)
 app.include_router(seller.router)
 app.include_router(seller_login.router)
 app.include_router(user.router)
+app.include_router(user_login.router)
 
 models.Base.metadata.create_all(bind=engine)
 
