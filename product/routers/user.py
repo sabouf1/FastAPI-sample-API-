@@ -41,7 +41,13 @@ def add_user(user: schemas.UserCreate):
     db.close()
     return db_user
 
-
+@router.get('/{user_name}', response_model=schemas.UserDisplay)
+async def get_user_id(user_name: str, db: Session = Depends(get_db), current_user: schemas.UserDisplay = Depends(get_current_user)):
+    user = db.query(models.User).filter(models.User.username == user_name).first()
+    if user is None:
+        raise HTTPException(status_code=404, detail="User not found")
+    return user
+  
 @router.get('/{user_id}', response_model=schemas.UserDisplay)
 async def get_user_id(user_id: int, db: Session = Depends(get_db), current_user: schemas.UserDisplay = Depends(get_current_user)):
     user = db.query(models.User).filter(models.User.id == user_id).first()
@@ -74,3 +80,22 @@ async def get_users(
 
     users = query.offset(skip).limit(limit).all()
     return users
+  
+  
+@router.put('/{user_id}', response_model=schemas.UserDisplay)
+async def update_user(user_id: int, user_update: schemas.UserUpdate, db: Session = Depends(get_db) , current_user: schemas.UserDisplay = Depends(get_current_user)):
+    db = SessionLocal()
+    user = db.query(models.User).filter(models.User.id == user_id).first()
+    
+    if not user:
+      raise HTTPException(status_code=404, detail="User not found")
+
+    for var, value in vars(user_update).items():
+        if value is not None:
+            setattr(user, var, value)    
+
+    db.add(user)
+    db.commit()
+    db.refresh(user)
+    db.close()
+    return user
