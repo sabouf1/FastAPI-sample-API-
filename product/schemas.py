@@ -18,6 +18,13 @@ class Seller(SellerBase):
   class Config:
     orm_mode = True
     
+class UserUpdate(BaseModel):
+  username: Optional[str] = None
+  email: Optional[EmailStr] = None
+  is_active: Optional[bool] = None
+  is_admin: Optional[bool] = None
+    
+    
 class SellerDisplay(BaseModel):
   username : str
   email : str
@@ -29,7 +36,13 @@ class ProductBase(BaseModel):
   name: str
   description: str
   price: int
-   
+
+class SellerUpdate(BaseModel):
+  username: Optional[str] = None
+  email: Optional[EmailStr] = None
+  is_active: Optional[bool] = None
+  is_admin: Optional[bool] = None
+       
 class Product(ProductBase):
   id: int
   name : str
@@ -68,8 +81,5 @@ class UserDisplay(UserBase):
   class Config:
     orm_mode = True
     
-class UserUpdate(BaseModel):
-    username: Optional[str] = None
-    email: Optional[EmailStr] = None
-    is_active: Optional[bool] = None
-    is_admin: Optional[bool] = None
+
+    
