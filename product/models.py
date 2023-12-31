@@ -19,6 +19,7 @@ class Seller(Base):
   email = Column(String)
   password = Column(String)
   products = relationship("Product" , back_populates='seller') 
+  products = relationship("Order" , back_populates='seller') 
   
 class User(Base):
   __tablename__= 'users'
@@ -40,7 +41,9 @@ class Order(Base):
     user_id = Column(Integer, ForeignKey('users.id'))
     quantity = Column(Integer, nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
+    order_status = Column(String)
 
     # Relationships
     product = relationship("Product", back_populates="orders")
     user = relationship("User", back_populates="orders")
+    seller = relationship("seller", back_populates="orders")

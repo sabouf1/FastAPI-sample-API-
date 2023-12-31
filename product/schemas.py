@@ -96,6 +96,7 @@ class OrderDisplay(BaseModel):
     user_id: int
     quantity: int
     created_at: datetime
+    order_status: str
 
     class Config:
         orm_mode = True
@@ -103,5 +104,6 @@ class OrderDisplay(BaseModel):
 class OrderDisplayExtended(OrderDisplay):
     product: Optional[Product]
     user: Optional[UserDisplay]
+    
 
     

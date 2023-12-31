@@ -25,7 +25,7 @@ def get_db():
         db.close()
  
 @router.post('/', response_model=schemas.SellerDisplay)
-def add_seller(seller: schemas.SellerCreate, current_user:schemas.Seller = Depends(get_current_user)):
+def add_seller(seller: schemas.SellerCreate):
     db = SessionLocal()
     hashed_password = ph.hash(seller.password)
     db_seller = models.Seller(username=seller.username, email=seller.email, password=hashed_password)
