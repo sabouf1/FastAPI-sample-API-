@@ -43,7 +43,9 @@ def get_seller(seller_id: int, db: Session = Depends(get_db), current_user:schem
     return seller_id
   
 @router.put('/{seller_id}', response_model=schemas.SellerDisplay)
-async def update_user(seller_id: int, user_update: schemas.SellerUpdate, db: Session = Depends(get_db) , current_user: schemas.SellerDisplay = Depends(get_current_user)):
+async def update_user(seller_id: int, 
+                      user_update: schemas.SellerUpdate, db: Session = Depends(get_db) , 
+                      current_user: schemas.SellerDisplay = Depends(get_current_user)):
     db = SessionLocal()
     seller = db.query(models.Seller).filter(models.Seller.id == seller_id).first()
     
@@ -60,4 +62,15 @@ async def update_user(seller_id: int, user_update: schemas.SellerUpdate, db: Ses
     db.close()
     return seller
   
-  
+@router.delete('/sellers/{seller_id}', status_code=status.HTTP_204_NO_CONTENT)
+async def delete_seller(seller_id: int, db: Session = Depends(get_db), current_user: schemas.SellerDisplay = Depends(get_current_user)):
+    # Retrieve the seller to be deleted
+    seller = db.query(models.Seller).filter(models.Seller.id == seller_id).first()
+    if not seller:
+        raise HTTPException(status_code=404, detail="Seller not found")
+
+    # Delete the seller
+    db.delete(seller)
+    db.commit()
+
+    return {"detail": "Seller successfully deleted"}
