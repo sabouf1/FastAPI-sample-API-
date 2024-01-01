@@ -2,19 +2,15 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from typing import List
 from .. import models, schemas, database
+from ..auth.functions import get_db
+
 
 router = APIRouter(
   prefix='/reviews',
   tags=['Reviews']
 )
 
-# Dependency to get the database session
-def get_db():
-    db = database.SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
+ 
 
 @router.post("/", response_model=schemas.ReviewDisplay, status_code=201)
 def create_review(review: schemas.ReviewBase, db: Session = Depends(get_db)):

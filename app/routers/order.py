@@ -3,6 +3,8 @@ from sqlalchemy.orm import Session
 from typing import List
 from .. import schemas, database, models
 import logging
+from ..auth.functions import get_db
+
 
 
 router = APIRouter()
@@ -15,13 +17,7 @@ router = APIRouter(
   tags=['Orders']
 )
 
-# Dependency to get the database session
-def get_db():
-    db = database.SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
+ 
 
 @router.post('/', response_model=schemas.OrderDisplay, status_code=status.HTTP_201_CREATED)
 def create_order(order: schemas.OrderCreate, db: Session = Depends(get_db)):

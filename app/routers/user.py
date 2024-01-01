@@ -4,7 +4,7 @@ from .. import models, schemas, database
 from sqlalchemy.orm import Session
 from argon2 import PasswordHasher
 from ..database import SessionLocal, engine
-# from .user_login import get_current_user
+from ..auth.functions import get_db
 from typing import List
 import logging
 
@@ -21,13 +21,7 @@ router = APIRouter(
   tags=['Users']
 )
 
-# Dependency to get the DB session
-def get_db():
-    db = database.SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
+ 
 
 
 @router.get('/', response_model=List[schemas.UserDisplay])

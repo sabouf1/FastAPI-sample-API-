@@ -2,6 +2,8 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from typing import List
 from .. import schemas, database, models
+from ..auth.functions import get_db
+
 
 
 router = APIRouter(
@@ -9,13 +11,7 @@ router = APIRouter(
   tags=['Products']
 )
 
-# Dependency to get the database session
-def get_db():
-    db = database.SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
+  
 
 @router.post('/products/', response_model=schemas.ProductDisplay, status_code=status.HTTP_201_CREATED)
 def create_product(product: schemas.ProductCreate, db: Session = Depends(get_db)):

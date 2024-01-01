@@ -14,6 +14,7 @@ class Product(Base):
   reviews = relationship("Review", back_populates="product")
   order_details = relationship("OrderDetail", back_populates="product")
   shopping_cart_items = relationship("ShoppingCartItem", back_populates="product")
+  wishlist_items = relationship("WishlistItem", back_populates="product")
 
 
 
@@ -39,6 +40,7 @@ class User(Base):
   orders = relationship("Order", back_populates="user")
   reviews = relationship("Review", back_populates="user")
   shopping_cart_items = relationship("ShoppingCartItem", back_populates="user")
+  wishlist_items = relationship("WishlistItem", back_populates="user")
   
 
 class Order(Base):
@@ -98,3 +100,5 @@ class WishlistItem(Base):
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"))
     product_id = Column(Integer, ForeignKey("products.id"))
+    user = relationship("User", back_populates="wishlist_items")
+    product = relationship("Product", back_populates="wishlist_items")    

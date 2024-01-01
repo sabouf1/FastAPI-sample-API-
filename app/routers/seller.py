@@ -2,19 +2,15 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from typing import List
 from .. import schemas, database, models
+from ..auth.functions import get_db
+
 
 router = APIRouter(
   prefix='/sellers',
   tags=['Sellers']
 )
 
-# Dependency to get the database session
-def get_db():
-    db = database.SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
+ 
 
 @router.get('/', response_model=List[schemas.SellerDisplay])
 def get_sellers(db: Session = Depends(get_db)):
