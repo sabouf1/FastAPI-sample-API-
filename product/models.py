@@ -13,6 +13,8 @@ class Product(Base):
   seller = relationship("Seller", back_populates="product")
   reviews = relationship("Review", back_populates="product")
   order_details = relationship("OrderDetail", back_populates="product")
+  shopping_cart_items = relationship("ShoppingCartItem", back_populates="product")
+
 
 
 class Seller(Base):
@@ -36,6 +38,8 @@ class User(Base):
   
   orders = relationship("Order", back_populates="user")
   reviews = relationship("Review", back_populates="user")
+  shopping_cart_items = relationship("ShoppingCartItem", back_populates="user")
+  
 
 class Order(Base):
   __tablename__ = 'orders'
@@ -48,7 +52,7 @@ class Order(Base):
   # Relationships
   user = relationship("User", back_populates="orders")
   seller = relationship("Seller", back_populates="orders")
-  order_details = relationship("OrderDetail", back_populates="orders")  
+  order_details = relationship("OrderDetail", back_populates="orders", cascade="all, delete-orphan")
   
 class OrderDetail(Base):
   __tablename__ = "order_details"
@@ -65,23 +69,30 @@ class OrderDetail(Base):
   
 
 class Review(Base):
-  __tablename__ = "reviews"
-  id = Column(Integer, primary_key=True, index=True)
-  content = Column(String)
-  user_id = Column(Integer, ForeignKey("users.id"))
-  product_id = Column(Integer, ForeignKey("products.id"))
+    __tablename__ = "reviews"
+    id = Column(Integer, primary_key=True, index=True)
+    content = Column(String)
+    user_id = Column(Integer, ForeignKey("users.id"))
+    product_id = Column(Integer, ForeignKey("products.id"))
+    order_id = Column(Integer, ForeignKey("orders.id"))  # New field
+    seller_id = Column(Integer, ForeignKey("sellers.id"))  # New field
 
-  user = relationship("User", back_populates="reviews")
-  product = relationship("Product", back_populates="reviews")
-    
+    user = relationship("User", back_populates="reviews")
+    product = relationship("Product", back_populates="reviews")
+    order = relationship("Order")  # New relationship
+    seller = relationship("Seller")  # New relationship
 
+  
 class ShoppingCartItem(Base):
     __tablename__ = "shopping_cart_items"
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"))
     product_id = Column(Integer, ForeignKey("products.id"))
     quantity = Column(Integer, default=1)
+    user = relationship("User", back_populates="shopping_cart_items")
+    product = relationship("Product", back_populates="shopping_cart_items")
 
+    
 class WishlistItem(Base):
     __tablename__ = "wishlist_items"
     id = Column(Integer, primary_key=True, index=True)

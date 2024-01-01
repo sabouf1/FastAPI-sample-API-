@@ -109,6 +109,8 @@ class ReviewBase(BaseModel):
     content: str
     user_id: int
     product_id: int
+    order_id: int  # New field
+    seller_id: int  # New field
 
 class ReviewDisplay(ReviewBase):
     id: int
@@ -123,8 +125,11 @@ class ShoppingCartItemBase(BaseModel):
     product_id: int
     quantity: int
 
-class ShoppingCartItemDisplay(ShoppingCartItemBase):
+class ShoppingCartItemDisplay(BaseModel):
     id: int
+    user_id: int
+    quantity: int
+    product: Optional[ProductDisplay]  # Make sure this matches the name in the SQLAlchemy model
     class Config:
         orm_mode = True
         

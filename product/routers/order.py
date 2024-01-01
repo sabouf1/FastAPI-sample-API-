@@ -87,6 +87,10 @@ def delete_order(order_id: int, db: Session = Depends(get_db)):
     order = db.query(models.Order).filter(models.Order.id == order_id).first()
     if order is None:
         raise HTTPException(status_code=404, detail="Order not found")
+
+    # Delete the order; associated order details will be deleted automatically
     db.delete(order)
     db.commit()
-    return {"detail": "Order deleted"}
+
+    return {"detail": "Order and associated order details deleted"}
+
