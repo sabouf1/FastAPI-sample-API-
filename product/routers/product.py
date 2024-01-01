@@ -1,46 +1,65 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
-from fastapi import FastAPI, HTTPException, Depends
-from .. import models, schemas
-from .seller_login import *
-from ..database import SessionLocal, engine
 from typing import List
+from .. import schemas, database, models
+
 
 router = APIRouter(
-  tags=['Products'],
-  prefix='/product'
+  prefix='/products',
+  tags=['Products']
 )
 
+# Dependency to get the database session
 def get_db():
-    db = SessionLocal()
+    db = database.SessionLocal()
     try:
         yield db
     finally:
         db.close()
-        
-@router.post('/', response_model=schemas.Product)
-def add_product(product: schemas.Product, current_user:schemas.Seller = Depends(get_current_user)):
-    db = SessionLocal()
-    db_product = models.Product(
-      name=product.name, 
-      description=product.
-      description, 
-      price=product.price, 
-      seller_id=1)
+
+@router.post('/products/', response_model=schemas.ProductDisplay, status_code=status.HTTP_201_CREATED)
+def create_product(product: schemas.ProductCreate, db: Session = Depends(get_db)):
+    # Here, you might want to check if the seller_id is valid
+    seller = db.query(models.Seller).filter(models.Seller.id == product.seller_id).first()
+    if not seller:
+        raise HTTPException(status_code=404, detail="Seller not found")
+
+    db_product = models.Product(**product.dict())
     db.add(db_product)
     db.commit()
     db.refresh(db_product)
-    db.close()
     return db_product
-  
-  
-@router.get('/{product_id}',response_model=schemas.Product)
-def get_product(product_id: int, current_user:schemas.Seller = Depends(get_current_user), db: Session = Depends(get_db) ):
+
+@router.get('/products/', response_model=List[schemas.ProductDisplay])
+def get_products(db: Session = Depends(get_db)):
+    products = db.query(models.Product).all()
+    return products
+
+@router.get('/products/{product_id}', response_model=schemas.ProductDisplay)
+def get_product(product_id: int, db: Session = Depends(get_db)):
+    product = db.query(models.Product).filter(models.Product.id == product_id).first()
+    if product is None:
+        raise HTTPException(status_code=404, detail="Product not found")
+    return product
+
+@router.put('/products/{product_id}', response_model=schemas.ProductDisplay)
+def update_product(product_id: int, product_update: schemas.ProductCreate, db: Session = Depends(get_db)):
     db_product = db.query(models.Product).filter(models.Product.id == product_id).first()
     if db_product is None:
         raise HTTPException(status_code=404, detail="Product not found")
+
+    for key, value in product_update.dict().items():
+        setattr(db_product, key, value)
+
+    db.commit()
+    db.refresh(db_product)
     return db_product
 
-@router.get('/', response_model=List[schemas.Product])
-def get_products(db: Session = Depends(get_db), current_user:schemas.Seller = Depends(get_current_user)):
-    return db.query(models.Product).all()
+@router.delete('/products/{product_id}', status_code=status.HTTP_204_NO_CONTENT)
+def delete_product(product_id: int, db: Session = Depends(get_db)):
+    product = db.query(models.Product).filter(models.Product.id == product_id).first()
+    if product is None:
+        raise HTTPException(status_code=404, detail="Product not found")
+    db.delete(product)
+    db.commit()
+    return {"detail": "Product deleted"}

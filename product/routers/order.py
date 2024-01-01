@@ -1,79 +1,92 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
-from .. import models, schemas
-from .. schemas import *
-from .user import get_current_user, get_db
 from typing import List
+from .. import schemas, database, models
+import logging
+
+
+router = APIRouter()
+
+logging.basicConfig(level=logging.INFO)
+
 
 router = APIRouter(
-  prefix='/order',
+  prefix='/orders',
   tags=['Orders']
 )
 
-@router.post('/', response_model=schemas.OrderDisplay)
-async def create_order(order: OrderCreate, db: Session = Depends(get_db), current_user: schemas.OrderDisplay = Depends(get_current_user)):
-    # Check if the product exists
-    product = db.query(models.Product).filter(models.Product.id == order.product_id).first()
-    if not product:
-        raise HTTPException(status_code=404, detail="Product not found")
-    # Check if the user is valid
-    user = db.query(models.User).filter(models.User.id == order.user_id).first()
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
-    # Create a new order
-    new_order = models.Order(
-        product_id=order.product_id,
-        quantity=order.quantity,
-        user_id=order.user_id
-    )
-    db.add(new_order)
+# Dependency to get the database session
+def get_db():
+    db = database.SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
+
+@router.post('/', response_model=schemas.OrderDisplay, status_code=status.HTTP_201_CREATED)
+def create_order(order: schemas.OrderCreate, db: Session = Depends(get_db)):
+    seller = db.query(models.Seller).filter(models.Seller.id == order.seller_id).first()
+    if not seller:
+      raise HTTPException(status_code=404, detail="Seller not found")
+    
+    db_order = models.Order(user_id=order.user_id, seller_id=seller.id)
+    db.add(db_order)
+    db.flush()  # Flush to get the order ID before committing
+
+    for detail in order.order_details:
+        db_detail = models.OrderDetail(order_id=db_order.id, **detail.model_dump())
+        db.add(db_detail)
+
     db.commit()
-    db.refresh(new_order)
-    return new_order
+    db.refresh(db_order)
+    return db_order
 
 
-@router.get('/{order_id}')
-async def get_order_by_order_id(order_id: int, db: Session = Depends(get_db), current_user: schemas.UserDisplay = Depends(get_current_user)  ):
-  order = db.query(models.Order).filter(models.Order.id == order_id).first()
-  if order is None:
-    raise HTTPException(status_code=404, detail='Order Not Found')
-  return order
+@router.get('/{order_id}', response_model=schemas.OrderDisplay)
+def get_order(order_id: int, db: Session = Depends(get_db)):
+    order = db.query(models.Order).filter(models.Order.id == order_id).first()
+    if order is None:
+        raise HTTPException(status_code=404, detail="Order not found")
+    return order
 
-@router.get('/', response_model=List[schemas.OrderDisplay])
-async def get_current_user_orders(db: Session = Depends(get_db), 
-                                  current_user: schemas.UserDisplay = Depends(get_current_user)):
-    user_id = current_user.id  # Assuming the UserDisplay schema includes the user ID
-    # Fetch orders for the current user
-    orders = db.query(models.Order).filter(models.Order.user_id == user_id).all()
-    if not orders:
-        raise HTTPException(status_code=404, detail="No orders found for the current user")
-    return orders
-  
-  
-@router.get('/orders/', response_model=List[schemas.OrderDisplayExtended])
-async def get_orders(db: Session = Depends(get_db),
-                     start_date: Optional[datetime] = None,
-                     end_date: Optional[datetime] = None,
-                     status: Optional[str] = None,
-                     user_id: Optional[int] = None,
-                     product_id: Optional[int] = None,
-                     skip: int = 0, limit: int = 10):
-    query = db.query(models.Order)
+@router.put('/{order_id}', response_model=schemas.OrderDisplay)
+def update_order(order_id: int, order_update: schemas.OrderUpdate, db: Session = Depends(get_db)):
+    # Fetch the existing order
+    db_order = db.query(models.Order).filter(models.Order.id == order_id).first()
+    if not db_order:
+        raise HTTPException(status_code=404, detail="Order not found")
 
-    if start_date and end_date:
-        query = query.filter(models.Order.created_at >= start_date,
-                             models.Order.created_at <= end_date)
+    # Update the status
+    db_order.status = order_update.status
 
-    if status:
-        query = query.filter(models.Order.order_status == status)
+    # Update order details if provided
+    if order_update.order_details:
+        existing_detail_ids = [detail.id for detail in db_order.order_details]
+        for detail_update in order_update.order_details:
+            # Check if the detail exists in the order
+            if detail_update.id in existing_detail_ids:
+                # Fetch and update the existing order detail
+                db_detail = db.query(models.OrderDetail).filter(models.OrderDetail.id == detail_update.id).first()
+                if detail_update.quantity is not None:
+                    db_detail.quantity = detail_update.quantity
+                # Update other fields as needed
+            else:
+                # Handle the case where the detail ID does not exist
+                raise HTTPException(status_code=404, detail=f"Order detail with id {detail_update.id} not found in the order")
 
-    if user_id:
-        query = query.filter(models.Order.user_id == user_id)
+    # Commit the transaction
+    db.commit()
+    db.refresh(db_order)
 
-    if product_id:
-        query = query.filter(models.Order.product_id == product_id)
+    return db_order
 
-    # Implementing pagination
-    orders = query.offset(skip).limit(limit).all()
 
-    return orders
+
+@router.delete('/{order_id}', status_code=status.HTTP_204_NO_CONTENT)
+def delete_order(order_id: int, db: Session = Depends(get_db)):
+    order = db.query(models.Order).filter(models.Order.id == order_id).first()
+    if order is None:
+        raise HTTPException(status_code=404, detail="Order not found")
+    db.delete(order)
+    db.commit()
+    return {"detail": "Order deleted"}

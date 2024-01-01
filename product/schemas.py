@@ -1,109 +1,146 @@
 from pydantic import BaseModel,EmailStr
 from typing import Optional
 from datetime import datetime
+from typing import List, Optional
 
+###########
 
-
-
-class SellerBase(BaseModel):
-  username : str
-  email : str
-  password : str
-  
-class SellerCreate(SellerBase):
-  pass
-
-class Seller(SellerBase):
-  id: int
-  username : str
-  email : str
-  
-  class Config:
-    orm_mode = True
-    
-class UserUpdate(BaseModel):
-  username: Optional[str] = None
-  email: Optional[EmailStr] = None
-  is_active: Optional[bool] = None
-  is_admin: Optional[bool] = None
-    
-    
-class SellerDisplay(BaseModel):
-  username : str
-  email : str
-  
-  class Config:
-    orm_mode = True
-    
-class ProductBase(BaseModel):
-  name: str
-  description: str
-  price: int
-
-class SellerUpdate(BaseModel):
-  username: Optional[str] = None
-  email: Optional[EmailStr] = None
-  is_active: Optional[bool] = None
-  is_admin: Optional[bool] = None
-       
-class Product(ProductBase):
-  id: int
-  name : str
-  description : str
-  seller: SellerDisplay
-
-  class Config:
-    orm_mode = True    
-
-class Login(BaseModel):
-  username: str
-  password: str
-  
-class Token(BaseModel):
-  access_token: str
-  token_type: str
-  
-class TokenData(BaseModel):
-  username: Optional[str] = None
-  
+# User Schemas
 class UserBase(BaseModel):
-  username: str
-  email: EmailStr
-  
+    username: str
+    email: str
+
 class UserCreate(UserBase):
-  password: str
+    password: str
 
-class UserUpdate(UserBase):
-  password: Optional[str] = None
-  
 class UserDisplay(UserBase):
-  id: int
-  is_active: bool
-  is_admin: bool
-    
-  class Config:
-    orm_mode = True
-    
-# Schema for creating a new order
-class OrderCreate(BaseModel):
-    product_id: int
-    user_id: int
-    quantity: int
-
-class OrderDisplay(BaseModel):
     id: int
-    product_id: int
-    user_id: int
-    quantity: int
-    created_at: datetime
-    order_status: str
+    is_active: bool
+    class Config:
+        orm_mode = True
+        
+###########
 
+# Seller Schemas
+class SellerBase(BaseModel):
+    username: str
+    email: str
+
+class SellerCreate(SellerBase):
+    password: str
+
+class SellerDisplay(BaseModel):
+    id: int
+    username: str
+    email: str
     class Config:
         orm_mode = True
 
-class OrderDisplayExtended(OrderDisplay):
-    product: Optional[Product]
-    user: Optional[UserDisplay]
-    
+###########
 
+# Product Schemas
+class ProductBase(BaseModel):
+    name: str
+    description: str
+    price: float
+
+class ProductCreate(BaseModel):
+    name: str
+    description: str
+    price: float
+    seller_id: int
+
+class ProductDisplay(ProductBase):
+    id: int
+    seller: SellerDisplay
+    class Config:
+        orm_mode = True
+        
+###########
+
+# OrderDetail Schemas
+class OrderDetailBase(BaseModel):
+    order_id: int
+    product_id: int
+    quantity: int
+
+class OrderDetailCreate(BaseModel):
+    product_id: int
+    quantity: int
     
+class OrderDetailUpdate(BaseModel):
+    id: int
+    quantity: Optional[int]
+    product_id: int
+    
+class OrderDetailDisplay(OrderDetailBase):
+    id: int
+    product_id: Optional[int]
+    class Config:
+        orm_mode = True
+
+###########
+
+# Order Schemas
+class OrderBase(BaseModel):
+    user_id: int
+
+class OrderCreate(BaseModel):
+    user_id: int
+    order_details: List[OrderDetailCreate]
+    seller_id: int
+    
+class OrderUpdate(BaseModel):
+    status: str 
+    order_details: Optional[List[OrderDetailUpdate]]
+
+class OrderDisplay(OrderBase):
+    id: int
+    created_at: datetime  
+    seller: SellerDisplay
+    order_details: List[OrderDetailDisplay]
+    class Config:
+        orm_mode = True
+ 
+###########
+
+# Review Schemas
+class ReviewBase(BaseModel):
+    content: str
+    user_id: int
+    product_id: int
+
+class ReviewDisplay(ReviewBase):
+    id: int
+    class Config:
+        orm_mode = True
+        
+###########
+
+# ShoppingCartItem Schemas
+class ShoppingCartItemBase(BaseModel):
+    user_id: int
+    product_id: int
+    quantity: int
+
+class ShoppingCartItemDisplay(ShoppingCartItemBase):
+    id: int
+    class Config:
+        orm_mode = True
+        
+###########
+
+# WishlistItem Schemas
+class WishlistItemBase(BaseModel):
+    user_id: int
+    product_id: int
+
+class WishlistItemDisplay(WishlistItemBase):
+    id: int
+    class Config:
+        orm_mode = True
+        
+###########        
+
+class TokenData(BaseModel):
+  pass

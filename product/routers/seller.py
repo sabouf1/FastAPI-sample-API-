@@ -1,76 +1,58 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
-from fastapi import FastAPI, HTTPException, Depends
-from ..import models, schemas
-from ..database import SessionLocal, engine
 from typing import List
-from argon2 import PasswordHasher
-from .seller_login import *
-
-
-router = APIRouter()
-
-ph = PasswordHasher()
+from .. import schemas, database, models
 
 router = APIRouter(
-  tags=['Sellers'],
-  prefix='/seller'
+  prefix='/sellers',
+  tags=['Sellers']
 )
 
+# Dependency to get the database session
 def get_db():
-    db = SessionLocal()
+    db = database.SessionLocal()
     try:
         yield db
     finally:
         db.close()
- 
-@router.post('/', response_model=schemas.SellerDisplay)
-def add_seller(seller: schemas.SellerCreate):
-    db = SessionLocal()
-    hashed_password = ph.hash(seller.password)
-    db_seller = models.Seller(username=seller.username, email=seller.email, password=hashed_password)
+
+@router.get('/', response_model=List[schemas.SellerDisplay])
+def get_sellers(db: Session = Depends(get_db)):
+    sellers = db.query(models.Seller).all()
+    return sellers
+
+@router.post('/', response_model=schemas.SellerDisplay, status_code=status.HTTP_201_CREATED)
+def create_seller(seller: schemas.SellerCreate, db: Session = Depends(get_db)):
+    db_seller = models.Seller(username=seller.username, email=seller.email, hashed_password=seller.password)  # Hash the password
     db.add(db_seller)
     db.commit()
     db.refresh(db_seller)
-    db.close()
     return db_seller
 
-@router.get('/{seller_id}', response_model=schemas.Seller)
-def get_seller(seller_id: int, db: Session = Depends(get_db), current_user:schemas.Seller = Depends(get_current_user)):
-    seller_id = db.query(models.Seller).filter(models.Seller.id == seller_id).first()
-    if seller_id is None:
-        raise HTTPException(status_code=404, detail="Seller not found")
-    return seller_id
-  
-@router.put('/{seller_id}', response_model=schemas.SellerDisplay)
-async def update_user(seller_id: int, 
-                      user_update: schemas.SellerUpdate, db: Session = Depends(get_db) , 
-                      current_user: schemas.SellerDisplay = Depends(get_current_user)):
-    db = SessionLocal()
+@router.get('/{seller_id}', response_model=schemas.SellerDisplay)
+def get_seller(seller_id: int, db: Session = Depends(get_db)):
     seller = db.query(models.Seller).filter(models.Seller.id == seller_id).first()
-    
-    if not seller:
-      raise HTTPException(status_code=404, detail="User not found")
-
-    for var, value in vars(user_update).items():
-        if value is not None:
-            setattr(seller, var, value)    
-
-    db.add(seller)
-    db.commit()
-    db.refresh(seller)
-    db.close()
+    if seller is None:
+        raise HTTPException(status_code=404, detail="Seller not found")
     return seller
-  
-@router.delete('/sellers/{seller_id}', status_code=status.HTTP_204_NO_CONTENT)
-async def delete_seller(seller_id: int, db: Session = Depends(get_db), current_user: schemas.SellerDisplay = Depends(get_current_user)):
-    # Retrieve the seller to be deleted
-    seller = db.query(models.Seller).filter(models.Seller.id == seller_id).first()
-    if not seller:
+
+@router.put('/{seller_id}', response_model=schemas.SellerDisplay)
+def update_seller(seller_id: int, seller: schemas.SellerCreate, db: Session = Depends(get_db)):
+    db_seller = db.query(models.Seller).filter(models.Seller.id == seller_id).first()
+    if db_seller is None:
         raise HTTPException(status_code=404, detail="Seller not found")
-
-    # Delete the seller
-    db.delete(seller)
+    db_seller.username = seller.username
+    db_seller.email = seller.email
+    db_seller.hashed_password = seller.password  # Hash the password here
     db.commit()
+    db.refresh(db_seller)
+    return db_seller
 
-    return {"detail": "Seller successfully deleted"}
+@router.delete('/{seller_id}', status_code=status.HTTP_204_NO_CONTENT)
+def delete_seller(seller_id: int, db: Session = Depends(get_db)):
+    db_seller = db.query(models.Seller).filter(models.Seller.id == seller_id).first()
+    if db_seller is None:
+        raise HTTPException(status_code=404, detail="Seller not found")
+    db.delete(db_seller)
+    db.commit()
+    return {"detail": "Seller deleted"}
