@@ -32,7 +32,15 @@ def get_users(db: Session = Depends(get_db) ):
 
 @router.post('/', response_model=schemas.UserDisplay, status_code=status.HTTP_201_CREATED)
 def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
-    db_user = models.User(username=user.username, email=user.email, hashed_password=hash_password(user.password))  # Here, hash the password
+    # Check for existing username or email in both User and Seller tables
+    existing_user = db.query(models.User).filter((models.User.username == user.username) | (models.User.email == user.email)).first()
+    existing_seller = db.query(models.Seller).filter((models.Seller.username == user.username) | (models.Seller.email == user.email)).first()
+
+    if existing_user or existing_seller:
+        raise HTTPException(status_code=400, detail="Username or email already in use")
+
+    # Create new user
+    db_user = models.User(username=user.username, email=user.email, hashed_password=hash_password(user.password))
     db.add(db_user)
     db.commit()
     db.refresh(db_user)

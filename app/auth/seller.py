@@ -29,13 +29,21 @@ def login(request: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(
 
 
 @router.get('/', response_model=List[schemas.SellerDisplay])
-def get_sellers(db: Session = Depends(get_db), current_user: schemas.SellerBase = Depends(get_current_user)):
+def get_sellers(db: Session = Depends(get_db), current_user: schemas.SellerDisplay = Depends(get_current_user)):
     sellers = db.query(models.Seller).all()
     return sellers
 
 @router.post('/', response_model=schemas.SellerDisplay, status_code=status.HTTP_201_CREATED)
 def create_seller(seller: schemas.SellerCreate, db: Session = Depends(get_db)):
-    db_seller = models.Seller(username=seller.username, email=seller.email, hashed_password=hash_password(seller.password))  # Hash the password
+    # Check for existing username or email in both User and Seller tables
+    existing_user = db.query(models.User).filter((models.User.username == seller.username) | (models.User.email == seller.email)).first()
+    existing_seller = db.query(models.Seller).filter((models.Seller.username == seller.username) | (models.Seller.email == seller.email)).first()
+
+    if existing_user or existing_seller:
+        raise HTTPException(status_code=400, detail="Username or email already in use")
+
+    # Create new seller
+    db_seller = models.Seller(username=seller.username, email=seller.email, hashed_password=hash_password(seller.password))
     db.add(db_seller)
     db.commit()
     db.refresh(db_seller)
@@ -49,7 +57,7 @@ def get_seller(seller_id: int, db: Session = Depends(get_db)):
     return seller
 
 @router.put('/{seller_id}', response_model=schemas.SellerDisplay)
-def update_seller(seller_id: int, seller: schemas.SellerCreate, db: Session = Depends(get_db)):
+def update_seller(seller_id: int, seller: schemas.SellerCreate, db: Session = Depends(get_db), current_user: schemas.SellerDisplay = Depends(get_current_user)):
     db_seller = db.query(models.Seller).filter(models.Seller.id == seller_id).first()
     if db_seller is None:
         raise HTTPException(status_code=404, detail="Seller not found")
@@ -61,7 +69,7 @@ def update_seller(seller_id: int, seller: schemas.SellerCreate, db: Session = De
     return db_seller
 
 @router.delete('/{seller_id}', status_code=status.HTTP_204_NO_CONTENT)
-def delete_seller(seller_id: int, db: Session = Depends(get_db)):
+def delete_seller(seller_id: int, db: Session = Depends(get_db), current_user: schemas.SellerDisplay = Depends(get_current_user)):
     db_seller = db.query(models.Seller).filter(models.Seller.id == seller_id).first()
     if db_seller is None:
         raise HTTPException(status_code=404, detail="Seller not found")

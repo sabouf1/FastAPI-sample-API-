@@ -39,34 +39,57 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
         detail="Could not validate credentials",
         headers={"WWW-Authenticate": "Bearer"},
     )
+
     try:
         logger.info("Decoding JWT token")
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         username: str = payload.get("sub")
-        if username is None:
-            logger.warning("Username not found in token payload")
+        account_type: str = payload.get("type")
+        if username is None or account_type is None:
+            logger.warning("Username or account type not found in token payload")
             raise credentials_exception
 
-        logger.info(f"Retrieved username {username} from token")        
-        token_data = schemas.TokenData(username=username)  
-    except JWTError as e :
-        logger.error(f"Error decoding JWT token: {e}")    
+        logger.info(f"Retrieved username {username} and account type {account_type} from token")
+        
+        if account_type == "user":
+            account = db.query(models.User).filter(models.User.username == username).first()
+        elif account_type == "seller":
+            account = db.query(models.Seller).filter(models.Seller.username == username).first()
+        else:
+            raise credentials_exception
+
+        if account is None:
+            raise credentials_exception
+
+        return account
+
+    except JWTError as e:
+        logger.error(f"Error decoding JWT token: {e}")
         raise credentials_exception
 
-    # user = db.query(models.User).filter(models.User.username == username).first()
-    # if user is None:
-    #     raise credentials_exception
-    # return user
 
 @router.post('/')
-def login(request: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
+def login(request: schemas.Login  , db: Session = Depends(get_db)):
+    # Check both User and Seller tables
     user = db.query(models.User).filter(models.User.username == request.username).first()
-    if not user:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Invalid Credentials")  
-    if not verify_password(request.password, user.hashed_password):
-        print(verify_password(request.password, user.hashed_password))
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Incorrect password")
-    # Generate a JWT token
+    seller = db.query(models.Seller).filter(models.Seller.username == request.username).first()
+
+    # Determine the account type
+    account = user if user else seller
+    account_type = "user" if user else "seller"
+    
+    if not account:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Invalid Credentials")
+
+    if not verify_password(request.password, account.hashed_password):
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Incorrect password")
+
+    # Generate JWT token with account type
     access_token_expires = timedelta(minutes=60)
-    access_token = create_access_token(data={"sub": user.username}, expires_delta=access_token_expires )
+    access_token = create_access_token(
+        data={"sub": account.username, "type": account_type},
+        expires_delta=access_token_expires
+    )
+
     return {"access_token": access_token, "token_type": "bearer"}
+  
