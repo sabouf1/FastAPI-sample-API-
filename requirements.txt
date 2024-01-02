@@ -5,3 +5,6 @@ pydantic
 python-jose
 argon2
 python-multipart
+passlib
+pydantic[email]
+argon2-cffi
