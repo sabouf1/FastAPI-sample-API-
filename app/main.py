@@ -1,8 +1,9 @@
 from typing import List
 from fastapi import FastAPI, Depends
+from .auth import seller, user, login
 from . import models 
 from .database import SessionLocal, engine
-from .routers import user, seller, order, product, reviews, cart, wishlist
+from .routers import order, product, reviews, cart, wishlist
 import logging
 
 
@@ -31,6 +32,7 @@ app.include_router(product.router)
 app.include_router(reviews.router)
 app.include_router(cart.router)
 app.include_router(wishlist.router)
+app.include_router(login.router)
 
 
 models.Base.metadata.create_all(bind=engine)

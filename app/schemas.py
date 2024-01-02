@@ -8,7 +8,7 @@ from typing import List, Optional
 # User Schemas
 class UserBase(BaseModel):
     username: str
-    email: str
+    email: EmailStr
 
 class UserCreate(UserBase):
     password: str
@@ -17,14 +17,14 @@ class UserDisplay(UserBase):
     id: int
     is_active: bool
     class Config:
-        orm_mode = True
+        from_attributes = True
         
 ###########
 
 # Seller Schemas
 class SellerBase(BaseModel):
     username: str
-    email: str
+    email: EmailStr
 
 class SellerCreate(SellerBase):
     password: str
@@ -34,7 +34,7 @@ class SellerDisplay(BaseModel):
     username: str
     email: str
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 ###########
 
@@ -54,7 +54,7 @@ class ProductDisplay(ProductBase):
     id: int
     seller: SellerDisplay
     class Config:
-        orm_mode = True
+        from_attributes = True
         
 ###########
 
@@ -77,7 +77,7 @@ class OrderDetailDisplay(OrderDetailBase):
     id: int
     product_id: Optional[int]
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 ###########
 
@@ -100,7 +100,7 @@ class OrderDisplay(OrderBase):
     seller: SellerDisplay
     order_details: List[OrderDetailDisplay]
     class Config:
-        orm_mode = True
+        from_attributes = True
  
 ###########
 
@@ -115,7 +115,7 @@ class ReviewBase(BaseModel):
 class ReviewDisplay(ReviewBase):
     id: int
     class Config:
-        orm_mode = True
+        from_attributes = True
         
 ###########
 
@@ -131,7 +131,7 @@ class ShoppingCartItemDisplay(BaseModel):
     quantity: int
     product: Optional[ProductDisplay]  # Make sure this matches the name in the SQLAlchemy model
     class Config:
-        orm_mode = True
+        from_attributes = True
         
 ###########
 
@@ -143,9 +143,17 @@ class WishlistItemBase(BaseModel):
 class WishlistItemDisplay(WishlistItemBase):
     id: int
     class Config:
-        orm_mode = True
+        from_attributes = True
         
 ###########        
-
+class Token(BaseModel):
+    access_token: str
+    token_type: str
+    
 class TokenData(BaseModel):
-  pass
+    username: Optional[str] = None
+    
+    
+class Login(BaseModel):
+    username: str
+    password: str

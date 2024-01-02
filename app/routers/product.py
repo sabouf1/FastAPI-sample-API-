@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 from typing import List
 from .. import schemas, database, models
 from ..auth.functions import get_db
+from ..auth.login import get_current_user
 
 
 
@@ -27,7 +28,7 @@ def create_product(product: schemas.ProductCreate, db: Session = Depends(get_db)
     return db_product
 
 @router.get('/products/', response_model=List[schemas.ProductDisplay])
-def get_products(db: Session = Depends(get_db)):
+def get_products(db: Session = Depends(get_db), current_user: schemas.UserDisplay = Depends(get_current_user)):
     products = db.query(models.Product).all()
     return products
 

@@ -1,12 +1,15 @@
 from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
 from ..schemas import *
 from .. import models, schemas, database
 from sqlalchemy.orm import Session
 from argon2 import PasswordHasher
 from ..database import SessionLocal, engine
-from ..auth.functions import get_db
+from .functions import get_db
 from typing import List
 import logging
+from .functions import *
+from .login import *
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -21,17 +24,15 @@ router = APIRouter(
   tags=['Users']
 )
 
- 
-
 
 @router.get('/', response_model=List[schemas.UserDisplay])
-def get_users(db: Session = Depends(get_db)):
+def get_users(db: Session = Depends(get_db) ):
     users = db.query(models.User).all()
     return users
 
 @router.post('/', response_model=schemas.UserDisplay, status_code=status.HTTP_201_CREATED)
 def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
-    db_user = models.User(username=user.username, email=user.email, hashed_password=user.password)  # Here, hash the password
+    db_user = models.User(username=user.username, email=user.email, hashed_password=hash_password(user.password))  # Here, hash the password
     db.add(db_user)
     db.commit()
     db.refresh(db_user)
