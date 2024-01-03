@@ -7,4 +7,8 @@ argon2
 python-multipart
 passlib
 pydantic[email]
+<<<<<<< HEAD
 argon2-cffi
+=======
+argon2-cffi
+>>>>>>> e31ce05d1a1cc8232a528e3572b009b85d576ac2
