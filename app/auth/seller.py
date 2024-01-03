@@ -43,7 +43,7 @@ def create_seller(seller: schemas.SellerCreate, db: Session = Depends(get_db)):
         raise HTTPException(status_code=400, detail="Username or email already in use")
 
     # Create new seller
-    db_seller = models.Seller(username=seller.username, email=seller.email, hashed_password=hash_password(seller.password))
+    db_seller = models.Seller(username=seller.username, email=seller.email, hashed_password=hash_password(seller.password), phone_number=seller.phone_number)
     db.add(db_seller)
     db.commit()
     db.refresh(db_seller)

@@ -24,6 +24,7 @@ class Seller(Base):
   username = Column(String)
   email = Column(String)
   hashed_password  = Column(String)
+  phone_number = Column(String)  
   
   product = relationship("Product" , back_populates='seller') 
   orders = relationship("Order" , back_populates='seller') 

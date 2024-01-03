@@ -1,7 +1,8 @@
-from pydantic import BaseModel,EmailStr
+from pydantic import BaseModel,EmailStr,validator
 from typing import Optional
 from datetime import datetime
 from typing import List, Optional
+import re
 
 ###########
 
@@ -9,13 +10,24 @@ from typing import List, Optional
 class UserBase(BaseModel):
     username: str
     email: EmailStr
+    phone_number: str    
+    
 
 class UserCreate(UserBase):
     password: str
+    
+    @validator('phone_number')
+    def validate_phone_number(cls, v):
+        pattern = r"\(\d{3}\)-\d{3}-\d{3}"
+        if not re.match(pattern, v):
+            raise ValueError('Phone number must be in the format (xxx)-xxx-xxx')
+        return v    
 
 class UserDisplay(UserBase):
     id: int
     is_active: bool
+    is_admin: bool
+    phone_number: Optional[str]=None    
     class Config:
         from_attributes = True
         
@@ -25,10 +37,17 @@ class UserDisplay(UserBase):
 class SellerBase(BaseModel):
     username: str
     email: EmailStr
+    phone_number: str   
 
 class SellerCreate(SellerBase):
     password: str
-
+    @validator('phone_number')
+    def validate_phone_number(cls, v):
+        pattern = r"\(\d{3}\)-\d{3}-\d{3}"
+        if not re.match(pattern, v):
+            raise ValueError('Phone number must be in the format (xxx)-xxx-xxx')
+        return v
+    
 class SellerDisplay(BaseModel):
     id: int
     username: str

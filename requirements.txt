@@ -3,7 +3,7 @@ sqlalchemy
 uvicorn
 pydantic
 python-jose
-argon2
+passlib[bcrypt]
 python-multipart
 passlib
 pydantic[email]

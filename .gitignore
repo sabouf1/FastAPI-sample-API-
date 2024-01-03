@@ -2,8 +2,13 @@
 /__pycache__/*
 /__pycache__/*/*
 /__pycache__/*/*/*
-/__pycache__/*/*/*/*
+/*/__pycache__/*
+/*/*/__pycache__/*
+*.pyc
+venv/
+.vscode/
+config.bat
+command
+log
 
-/.vscode
 
-/venv
