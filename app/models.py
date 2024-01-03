@@ -36,6 +36,7 @@ class User(Base):
   hashed_password  = Column(String)
   is_active = Column(Boolean, default=True)
   is_admin = Column(Boolean, default=False)
+  phone_number = Column(String)
   
   orders = relationship("Order", back_populates="user")
   reviews = relationship("Review", back_populates="user")
